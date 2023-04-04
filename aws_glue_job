@@ -1,0 +1,34 @@
+import requests
+import mysql.connector
+
+# Set up a connection to your MySQL database
+cnx = mysql.connector.connect(
+    host=<db_host>,
+      user=<db_user>,
+            password=<db_password>,
+                      database=<db_name>
+)
+cursor = cnx.cursor()
+
+# Make a GET request to the endpoint
+response = requests.get('<your_endpoint_url>')
+
+# Parse the response and extract the data
+for line in response.text.split('\n'):
+    if not line:
+        continue
+    data = line.strip().split(',')
+    timestamp = data[0]
+    id = data[1]
+    path = data[2]
+
+    # Insert the data into your MySQL database
+    query = f"INSERT INTO my_table (timestamp, id, path) VALUES ('{timestamp}', '{id}', '{path}')"
+    cursor.execute(query)
+
+# Commit the changes to the database
+cnx.commit()
+
+# Close the database connection
+cursor.close()
+cnx.close()

@@ -1,0 +1,40 @@
+{
+  "jobConfig": {
+    "name": "test1",
+    "description": "",
+    "role": "arn:aws:iam::586214848823:role/service-role/AWSGlueServiceRole",
+    "command": "pythonshell",
+    "version": "3.0",
+    "workerType": null,
+    "numberOfWorkers": null,
+    "maxCapacity": 0.0625,
+    "maxRetries": 0,
+    "timeout": 2880,
+    "maxConcurrentRuns": 1,
+    "security": "none",
+    "scriptName": "new_test.py",
+    "scriptLocation": "s3://aws-glue-assets-586214848823-us-east-1/scripts/",
+    "language": "python-3.9",
+    "jobParameters": [
+      {
+        "key": "--additional-python-modules",
+        "value": "kafka-python==2.0.2",
+        "existing": false
+      }
+    ],
+    "tags": [],
+    "jobMode": "DEVELOPER_MODE",
+    "createdOn": "2023-04-03T04:59:46.583Z",
+    "developerMode": true,
+    "connectionsList": [],
+    "temporaryDirectory": "s3://aws-glue-assets-586214848823-us-east-1/temporary/",
+    "glueHiveMetastore": true,
+    "etlAutoTuning": false,
+    "pythonShellPrebuiltLibraryOption": "analytics",
+    "flexExecution": false,
+    "minFlexWorkers": null,
+    "pythonPath": null
+  },
+  "hasBeenSaved": false,
+  "script": "import sys\r\nimport requests\r\n\r\nurl = \"http://ec2-54-221-146-176.compute-1.amazonaws.com:5000/stream\"\r\nresponse = requests.get(url, stream=True)\r\nfor line in response.iter_lines():\r\n    # Decode the line as UTF-8 and do further processing as needed\r\n    decoded_line = line.decode('utf-8')\r\n    if \"/rate/\" in decoded_line:\r\n        match = re.match(r'^.*?(\\d+),GET /rate/([^/]+)=(\\d+)$', log_message)\r\n        if match is not None:\r\n            user_id = match.group(1)\r\n            movie_name = match.group(2)\r\n            rating = match.group(3)\r\n            writer.writerow([user_id, movie_name, rating])\r\n            file.flush()\r\n            \r\n            \r\nimport requests\r\nimport mysql.connector\r\nfrom datetime import datetime\r\n\r\n# Connect to MySQL\r\ncnx = mysql.connector.connect(user='admin', password='password',\r\n                              host='database-1.c7y1tedurj3x.us-east-1.rds.amazonaws.com',\r\n                              database='kafka')\r\ncursor = cnx.cursor()\r\n\r\n# Endpoint URL\r\nurl = 'http://ec2-54-221-146-176.compute-1.amazonaws.com:5000/stream'\r\n\r\n# Continuously read data from the endpoint and write to MySQL\r\nwhile True:\r\n    try:\r\n        response = requests.get(url, stream=True)\r\n        for line in response.iter_lines():\r\n            if line:\r\n                # Decode the message value and split by comma\r\n                message = line.decode()\r\n                if \"/rate/\" in decoded_line:\r\n                    match = re.match(r'^.*?(\\d+),GET /rate/([^/]+)=(\\d+)$', log_message)\r\n                    if match is not None:\r\n                        user_id = match.group(1)\r\n                        movie_name = match.group(2)\r\n                        rating = match.group(3)\r\n\r\n                        # Write the message to MySQL\r\n                        query = f\"INSERT INTO ratings (user_id, movie_name, rating) VALUES ('{user_id}', {movie_name}, '{rating}')\"\r\n                        cursor.execute(query)\r\n                        cnx.commit()\r\n    except Exception as e:\r\n        print(f\"Error occurred: {e}\")\r\n\r\n# Close the MySQL connection\r\ncursor.close()\r\ncnx.close()\r\n"
+}
